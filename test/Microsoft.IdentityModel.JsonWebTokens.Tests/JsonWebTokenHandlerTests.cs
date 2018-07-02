@@ -83,6 +83,12 @@ namespace Microsoft.IdentityModel.JsonWebTokens.Tests
                 theoryData.ExpectedException.ProcessNoException(context);
                 var jweTokenFromJwtHandler = new JsonWebToken(jweFromJwtHandler);
                 var jweTokenFromJsonHandler = new JsonWebToken(jweFromJsonHandler);
+
+                context.PropertiesToIgnoreWhenComparing = new Dictionary<Type, List<string>>
+                {
+                    { typeof(JsonWebToken), new List<string> { "EncodedToken" } },
+                };
+
                 IdentityComparer.AreEqual(jweTokenFromJwtHandler, jweTokenFromJsonHandler, context);
             }
             catch (Exception ex)
