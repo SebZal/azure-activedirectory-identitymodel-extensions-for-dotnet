@@ -169,6 +169,12 @@ namespace Microsoft.IdentityModel.JsonWebTokens
         public string Cty => Header.Value<string>(JwtHeaderParameterNames.Cty) ?? String.Empty;
 
         /// <summary>
+        /// Gets the encryption algorithm (Enc) of the token.
+        /// </summary>
+        /// <remarks>If the 'enc' value is not found, an empty string is returned.</remarks>   
+        public string Enc => Header.Value<string>(JwtHeaderParameterNames.Enc) ?? String.Empty;
+
+        /// <summary>
         /// Represents the cryptographic operations applied to the JWT and optionally any additional properties of the JWT. 
         /// </summary>
         public JObject Header
@@ -182,6 +188,11 @@ namespace Microsoft.IdentityModel.JsonWebTokens
         /// </summary>
         /// <remarks>If the 'JWT ID' claim is not found, an empty string is returned.</remarks>
         public override string Id => Payload?.Value<string>(JwtRegisteredClaimNames.Jti) ?? String.Empty;
+
+        /// <summary>
+        /// Gets the <see cref="JsonWebToken"/> associated with this instance.
+        /// </summary>
+        public JsonWebToken InnerToken { get; internal set; }
 
         /// <summary>
         /// Gets the 'value' of the 'iat' claim { iat, 'value' } converted to a <see cref="DateTime"/> assuming 'value' is seconds since UnixEpoch (UTC 1970-01-01T0:0:0Z).

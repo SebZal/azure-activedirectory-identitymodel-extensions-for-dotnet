@@ -33,7 +33,6 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IdentityModel.Tokens.Jwt.Tests;
 using System.Security.Claims;
-using System.Text;
 using Xunit;
 
 #pragma warning disable CS3016 // Arrays as attribute arguments is not CLS-compliant
@@ -77,8 +76,8 @@ namespace Microsoft.IdentityModel.JsonWebTokens.Tests
                 string jweFromJwtHandler = theoryData.JwtSecurityTokenHandler.CreateEncodedJwt(theoryData.TokenDescriptor);
                 string jweFromJsonHandler = theoryData.JsonWebTokenHandler.CreateJsonWebToken(theoryData.Payload, theoryData.TokenDescriptor.SigningCredentials, theoryData.TokenDescriptor.EncryptingCredentials);
 
-                //theoryData.JwtSecurityTokenHandler.ValidateToken(jwsFromJwtHandler, theoryData.ValidationParameters, out SecurityToken validatedToken);
-                //theoryData.JsonWebTokenHandler.ValidateToken(jwtFromJsonHandler, theoryData.ValidationParameters);
+                theoryData.JwtSecurityTokenHandler.ValidateToken(jweFromJwtHandler, theoryData.ValidationParameters, out SecurityToken validatedToken);
+                theoryData.JsonWebTokenHandler.ValidateToken(jweFromJsonHandler, theoryData.ValidationParameters);
 
                 theoryData.ExpectedException.ProcessNoException(context);
                 var jweTokenFromJwtHandler = new JsonWebToken(jweFromJwtHandler);
