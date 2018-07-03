@@ -30,6 +30,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IdentityModel.Tokens.Jwt.Tests;
 using System.Security.Claims;
@@ -222,6 +223,61 @@ namespace Microsoft.IdentityModel.JsonWebTokens.Tests
             TestUtilities.AssertFailIfErrors(context);
         }
 
+        [Theory, MemberData(nameof(RoundTripJWETheoryData))]
+        public void RoundTripJWE(CreateTokenTheoryData theoryData)
+        {
+            var context = TestUtilities.WriteHeader($"{this}.RoundTripJWE", theoryData);
+            var handler = new JsonWebTokenHandler();
+            var jweCreatedInMemory = handler.CreateJsonWebToken(theoryData.Payload, theoryData.SigningCredentials, theoryData.EncryptingCredentials);
+            var jweCreatedInMemoryToken = new JsonWebToken(jweCreatedInMemory);
+            try
+            {
+                var tokenValidationResult = handler.ValidateToken(jweCreatedInMemory, theoryData.ValidationParameters);
+                var outerToken = tokenValidationResult.SecurityToken as JsonWebToken;
+
+                Assert.True(outerToken != null, "ValidateToken should not return a null token for the JWE token.");
+                TestUtilities.CallAllPublicInstanceAndStaticPropertyGets(outerToken, theoryData.TestId);
+
+                Assert.True(outerToken.InnerToken != null, "ValidateToken should not return a null token for the inner JWE token.");
+                TestUtilities.CallAllPublicInstanceAndStaticPropertyGets(outerToken.InnerToken, theoryData.TestId);
+
+                context.PropertiesToIgnoreWhenComparing = new Dictionary<Type, List<string>>
+                {
+                    { typeof(JsonWebToken), new List<string> { "EncodedToken" } },
+                };
+
+                if (!IdentityComparer.AreEqual(jweCreatedInMemoryToken.Payload, outerToken.Payload, context))
+                    context.Diffs.Add("jweCreatedInMemory.Payload != jweValidated.Payload");
+
+                if (!IdentityComparer.AreEqual(jweCreatedInMemoryToken.Payload, outerToken.InnerToken.Payload, context))
+                    context.Diffs.Add("jweCreatedInMemory.Payload != jweValidated.InnerToken.Payload");
+
+                TestUtilities.AssertFailIfErrors(string.Format(CultureInfo.InvariantCulture, "RoundTripJWE: "), context.Diffs);
+            }
+            catch (Exception ex)
+            {
+                theoryData.ExpectedException.ProcessException(ex, context);
+            }
+        }
+
+        public static TheoryData<CreateTokenTheoryData> RoundTripJWETheoryData
+        {
+            get
+            {
+                return new TheoryData<CreateTokenTheoryData>
+                {
+                    new CreateTokenTheoryData()
+                    {
+                        TestId = "RoundTripJWEValid",
+                        ValidationParameters = Default.SymmetricEncryptSignTokenValidationParameters,
+                        Payload = Default.Payload,
+                        SigningCredentials = Default.SymmetricSigningCredentials,
+                        EncryptingCredentials = Default.SymmetricEncryptingCredentials
+                    }
+                };
+            }
+        }
+
         // Test checks to make sure that an access token can be successfully validated by the JsonWebTokenHandler.
         // Also ensures that a non-standard claim can be successfully retrieved from the payload and validated.
         [Fact]
@@ -248,7 +304,9 @@ namespace Microsoft.IdentityModel.JsonWebTokens.Tests
 
     public class CreateTokenTheoryData : TheoryDataBase
     {
-        public JObject Payload { get; set; } 
+        public JObject Payload { get; set; }
+
+        public EncryptingCredentials EncryptingCredentials { get; set; }
 
         public SigningCredentials SigningCredentials { get; set; }
 
